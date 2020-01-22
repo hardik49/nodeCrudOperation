@@ -1,9 +1,6 @@
 const fs = require('fs');
-let flag = 0;
+let flag;
 let fileContent = JSON.parse(fs.readFileSync('data.json'));
-const userDetailsList = fileContent.map((elm) => {
-  return elm;
-});
 
 function message(statusCode, status, msg, data = '') {
   let obj = {
@@ -16,26 +13,25 @@ function message(statusCode, status, msg, data = '') {
 }
 
 function addNewUser(userData) {
-  fileContent.forEach((element) => {
-    if (element.id == userData.id) {
-      return message(200, 'OK', 'Your user ID is already exists!');
-    } else if (element.email == userData.email) {
-      return message(200, 'OK', 'Your email is already exists!');
-    } else if (element.mobile == userData.mobile) {
-      return message(200, 'OK', 'Your mobile is already exists!');
-    }
-
-    if (element.id !== userData.id) {
-      if (element.email !== userData.email) {
-        if (element.mobile !== userData.mobile) {
+  fileContent.some((element) => { 
+    flag = false;
+    if (element.id != userData.id) {
+      if (element.email != userData.email) {
+        if (element.mobile != userData.mobile) {
           flag = true;
+        } else {
+          return message(200, 'OK', 'Your mobile is already exists!');
         }
+      } else {
+        return message(200, 'OK', 'Your email is already exists!');
       }
+    } else {
+      return message(200, 'OK', 'Your user ID is already exists!');
     }
   });
   if (flag) {
-    userDetailsList.push(JSON.parse(userData));
-    fs.writeFileSync('data.json', JSON.stringify(userDetailsList));
+    fileContent.push(JSON.parse(userData));
+    fs.writeFileSync('data.json', JSON.stringify(fileContent));
     return message(200, 'OK', 'User successfully being added');
   } else {
     return message(200, 'OK', 'User exists');
@@ -43,11 +39,11 @@ function addNewUser(userData) {
 }
 
 function deleteUser(userData) {
-  const deleteUser = userDetailsList.splice(userDetailsList.findIndex(() => {
+  const deleteUser = fileContent.splice(fileContent.findIndex(() => {
     return userData.id;
   }), 1);
   if (deleteUser) {
-    fs.writeFileSync('data.json', JSON.stringify(userDetailsList));
+    fs.writeFileSync('data.json', JSON.stringify(fileContent));
     return 'User deleted successfully!';
   }
   else {
@@ -67,12 +63,12 @@ function viewUser(userData) {
   if (flag) {
     return message(200, 'OK', 'User successfully being added', userId);
   } else {
-    console.log('User is no longer exists');
+    return 'User is no longer exists';
   }
 }
 
 function updateUser(userData) {
-  fileContent.forEach((element) => {
+  let userDetails = fileContent.some((element) => {
     if (element.id == JSON.parse(userData).id) {
       Object.keys(JSON.parse(userData)).forEach((ele) => {
         if (ele == "email") {
@@ -86,12 +82,11 @@ function updateUser(userData) {
           }
         }
       });
-      flag = 1;
+      return true;
     }
   });
-
-  if (flag == 1) {
-    fs.writeFileSync('data.json', JSON.stringify(userDetailsList));
+  if (userDetails) {
+    fs.writeFileSync('data.json', JSON.stringify(fileContent));
     return 'User Updated';
   } else {
     return 'User does not exists';
